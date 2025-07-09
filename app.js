@@ -493,13 +493,9 @@ async function transcribeWithGroq(audioPath, detectLanguage = true, chunkNumber 
     return "[Error: Chunk file not found]";
   }
 
-  // Check file size (Groq has a 25MB limit)
   const stats = fs.statSync(audioPath);
   const fileSizeInMB = stats.size / (1024 * 1024);
-  console.log(`📊 Chunk ${chunkNumber} size: ${fileSizeInMB.toFixed(2)} MB`);
-  
   if (fileSizeInMB > 25) {
-    console.error(`❌ Chunk ${chunkNumber} too large: ${fileSizeInMB.toFixed(2)} MB`);
     return `[Error: Chunk ${chunkNumber} exceeds 25MB limit]`;
   }
 
@@ -508,24 +504,17 @@ async function transcribeWithGroq(audioPath, detectLanguage = true, chunkNumber 
     filename: path.basename(audioPath),
     contentType: "audio/wav"
   });
-  
-  // Use whisper-large-v3 for better accuracy
+
   const model = "whisper-large-v3";
   form.append("model", model);
   form.append("response_format", "text");
-  
-  // Force English language regardless of detectLanguage setting
+
+  // 💡 Force English but REMOVE prompt to avoid echo
   form.append("language", "en");
-  
-  // Use lower temperature for more consistent English output
   form.append("temperature", "0.1");
-  
-  // Add prompt to encourage English transcription
-  form.append("prompt", "Please transcribe this audio in English. If the speaker is using another language, translate it to English.");
-  
+
   try {
-    console.log(`🔄 Transcribing chunk ${chunkNumber} with model: ${model} (forced English)`);
-    
+    console.log(`🔄 Transcribing chunk ${chunkNumber}...`);
     const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST",
       headers: {
@@ -536,29 +525,27 @@ async function transcribeWithGroq(audioPath, detectLanguage = true, chunkNumber 
     });
 
     if (!response.ok) {
-      let errData;
-      try {
-        errData = await response.json();
-        console.error(`❌ API Error for chunk ${chunkNumber}:`, JSON.stringify(errData, null, 2));
-      } catch {
-        errData = await response.text();
-        console.error(`❌ API Error for chunk ${chunkNumber}:`, errData);
-      }
-      return `[Error transcribing chunk ${chunkNumber}: ${response.status} - ${errData.error?.message || errData}]`;
+      const errorData = await response.text();
+      console.error(`❌ Error: ${errorData}`);
+      return `[Error transcribing chunk ${chunkNumber}]`;
     }
 
     const transcript = await response.text();
-    
-    // Log transcript length for debugging
-    console.log(`✅ Chunk ${chunkNumber} transcribed (English): ${transcript.length} chars - "${transcript.substring(0, 100)}..."`);
-    
-    return transcript;
-    
+
+    // ✅ Clean up repeated junk if any
+    const cleaned = transcript
+      .replace(/(Please transcribe.*?English\.)/gi, "")
+      .replace(/\s+/g, " ")  // collapse excessive spaces
+      .trim();
+
+    return cleaned;
+
   } catch (err) {
-    console.error(`❌ Transcription error for chunk ${chunkNumber}:`, err.message);
+    console.error(`❌ Error transcribing chunk ${chunkNumber}: ${err.message}`);
     return `[Error transcribing chunk ${chunkNumber}: ${err.message}]`;
   }
 }
+
 
 // 🔧 Clean up function for graceful shutdown
 process.on('SIGINT', () => {
