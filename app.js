@@ -587,3 +587,5 @@ app.listen(PORT, () => {
   console.log(`🔧 FFmpeg path: ${ffmpegPath}`);
   console.log(`🔧 FFprobe path: ${ffprobeStatic.path || ffprobeStatic}`);
 });
+
+export default app; 
