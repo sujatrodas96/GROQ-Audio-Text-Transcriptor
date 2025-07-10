@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✨ AI Audio/Video Transcriber</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #f4f4f4;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    h2 {
+      text-align: center;
+      font-size: 2rem;
+      color: #00ffcc;
+      text-shadow: 1px 1px 4px rgba(0, 255, 204, 0.5);
+    }
+    form {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #00ffcc;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+    }
+    input[type="file"], input[type="checkbox"] {
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+      transition: 0.3s ease;
+    }
+    button:hover {
+      background: #0ff;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #fff2;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 700px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+    }
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 15px;
+      font-family: monospace;
+      background: #001f1f;
+      color: #00ffcc;
+      border: 1px solid #00ffcc;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .buttons button {
+      margin-right: 10px;
+    }
+    .success {
+      color: #0f0;
+    }
+    .error {
+      color: #f33;
+    }
+    .warning {
+      color: #ffa500;
+    }
+  </style>
+</head>
+<body>
+  <h2>🌟 AI Audio/Video Transcriber</h2>
+  <form method="POST" action="/upload" enctype="multipart/form-data">
+    <label for="audio">Choose an audio or video file:</label><br>
+    <input type="file" name="audio" accept="audio/*,video/*" required /><br><br>
+
+    <label>
+      <input type="checkbox" name="detectLanguage" value="true" checked />
+      Auto-detect source language (output: English)
+    </label><br><br>
+
+    <button type="submit">Upload & Transcribe</button>
+  </form>
+
+  <div class="card" style="text-align: center;">
+    <h3>🔧 Test Groq API</h3>
+    <button onclick="testAPI()">Test API Connection</button>
+    <div id="apiResult" style="margin-top: 10px;"></div>
+  </div>
+
+  <script>
+    async function testAPI() {
+      const resultDiv = document.getElementById('apiResult');
+      resultDiv.innerHTML = '⏳ Testing API connection...';
+
+      try {
+        const response = await fetch('/test-api');
+        const data = await response.json();
+
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div class="success">✅ API Key is working!</div>
+            <div><strong>Available Models:</strong></div>
+            <ul>
+              ${data.availableAudioModels.map(m => `<li>${m.id}</li>`).join('')}
+            </ul>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error">❌ API Error: ${data.message}</div>`;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">❌ Connection Error: ${err.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

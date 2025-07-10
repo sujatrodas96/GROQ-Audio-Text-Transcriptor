@@ -9,12 +9,17 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static"; // Add this import
 import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "public")));
 const UPLOAD_DIR = "uploads";
 const CHUNK_DIR = "chunks";
 
@@ -68,64 +73,7 @@ app.get("/test-api", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send(`
-    <h2>🎤 Upload Audio/Video → Get English Transcript via Groq</h2>
-    
-    <div style="margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
-      <h3>🔧 Test API Connection</h3>
-      <button onclick="testAPI()">Test Groq API Key</button>
-      <div id="apiResult" style="margin-top: 10px;"></div>
-    </div>
-    
-    <div style="margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 5px; border-left: 4px solid #007bff;">
-      <h4>📋 How it works:</h4>
-      <ul>
-        <li>Upload any audio or video file</li>
-        <li>File is split into chunks for better processing</li>
-        <li><strong>Output is always in English</strong> (translates if needed)</li>
-        <li>Get complete transcript with download options</li>
-      </ul>
-    </div>
-    
-    <form method="POST" action="/upload" enctype="multipart/form-data">
-      <input type="file" name="audio" accept="audio/*,video/*" required />
-      <br><br>
-      <label>
-        <input type="checkbox" name="detectLanguage" value="true" checked />
-        Auto-detect source language (but output will be English)
-      </label>
-      <br><br>
-      <button type="submit">Upload & Transcribe to English</button>
-    </form>
-    
-    <script>
-      async function testAPI() {
-        const resultDiv = document.getElementById('apiResult');
-        resultDiv.innerHTML = '⏳ Testing API connection...';
-        
-        try {
-          const response = await fetch('/test-api');
-          const data = await response.json();
-          
-          if (data.success) {
-            resultDiv.innerHTML = \`
-              <div style="color: green;">✅ API Key is working!</div>
-              <div><strong>Available Models:</strong></div>
-              <ul>\${data.availableAudioModels.map(m => \`<li>\${m.id}</li>\`).join('')}</ul>
-            \`;
-          } else {
-            resultDiv.innerHTML = \`
-              <div style="color: red;">❌ API Error: \${data.message}</div>
-            \`;
-          }
-        } catch (error) {
-          resultDiv.innerHTML = \`
-            <div style="color: red;">❌ Connection Error: \${error.message}</div>
-          \`;
-        }
-      }
-    </script>
-  `);
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.post("/upload", upload.single("audio"), async (req, res) => {
